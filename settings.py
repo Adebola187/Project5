@@ -17,7 +17,7 @@ SESSION_CONFIG_DEFAULTS = dict(
     real_world_currency_per_point=1.00, participation_fee=0.00, doc=""
 )
 
-PARTICIPANT_FIELDS = ['Question','answer','selected_round', 'Question2', 'round_number','task_rounds', 'reward_to_pay',]
+PARTICIPANT_FIELDS = ['Question','replacechar','answer','selected_round', 'Question2', 'round_number','task_rounds', 'reward_to_pay',]
 SESSION_FIELDS = ["answers"]
 
 # ISO-639 code
@@ -26,7 +26,7 @@ LANGUAGE_CODE = 'en'
 
 # e.g. EUR, GBP, CNY, JPY
 REAL_WORLD_CURRENCY_CODE = ''
-USE_POINTS = True
+USE_POINTS = False
 
 ADMIN_USERNAME = 'admin'
 # for security, best to set admin password in an environment variable

@@ -68,7 +68,7 @@ class Player(BasePlayer):
     )
     Question2 = models.StringField(
         choices=[[['Lottery 1: You have 10% chance to win 30; 40% chance to win 0.5 and 50% chance to win 0', 30, 0.5, 0, '10%', '40%', '50%'],
-                  'Lottery 1: You have 10% chance to win 30, 40% chance to win 0.5 and 0 otherwise', ],
+                  'Lottery 1: You have 10% chance to win 30, 40% chance to win 0.5 and 50% chance to win 0 ', ],
                  [['Lottery 2: You have 50% chance to win 5 and 50% chance to win 1.4', 5, 1.4, '50%', '50%'],
                   'Lottery 2: You have 50% chance to win 5, 50% chance to win 1.4', ]],
         doc='Players decision', widget=widgets.RadioSelect
@@ -84,10 +84,10 @@ class Player(BasePlayer):
     choice = models.IntegerField()
     choice_in_round = models.StringField()
     answer = models.FloatField()
+    random_num_prob = models.IntegerField()
 
 
 # PAGES
-
 class Introduction(Page):
     form_model = 'player'
 
@@ -118,8 +118,7 @@ class Question(Page):
     @staticmethod
     def before_next_page(player: Player, timeout_happened):
         player.choice = player.in_rounds(1, C.NUM_ROUNDS) == player.Question
-        choice = {}
-        choice[player.Question] = player.in_rounds(1, C.NUM_ROUNDS)
+        choice = {player.Question: player.in_rounds(1, C.NUM_ROUNDS)}
         print(choice)
         player.session.answers[1] = player.Question
 
@@ -179,6 +178,10 @@ class Question3(Page):
         #     player.choice_in_round = player.Question3
 
 
+def replacechar(self):
+    return self.replace("%", "").replace("'", "").replace("[", "").replace("]", "").replace(" ", "")
+
+
 class Results(Page):
     form_model = 'player'
 
@@ -186,32 +189,51 @@ class Results(Page):
     def is_displayed(player: Player):
         return player.round_number == C.NUM_ROUNDS
 
+    # @staticmethod
+    # def replacechar(self):
+    #     return self.replace("%", "").replace("'", "").replace("[", "").replace("]", "").replace(" ", "")
+    #
     @staticmethod
     def vars_for_template(player: Player):
         probability = random.randint(1, 100)
+        random_num_pay = probability
+        player.random_num_prob = random_num_pay
         split = player.session.answers[player.participant.selected_round].split(",")
         if len(split) == 7:
             index = 4
-        else:
+        elif len(split) == 5:
             index = 3
+        else:
+            index = 5
         if split[3] == "100%":
             answer = split[1].replace("[", "").replace("]", "")
-        elif probability <= int(
-                split[index].replace("%", "").replace("'", "").replace(" ", "").replace("[", "").replace("]", "")):
+        elif len(split) == 5 and probability <= int(
+                split[index].replace("%", "").replace("'", "").replace(" ' ", "").replace("[", "").replace("]", "")):
             answer = split[1].replace("[", "").replace("]", "")
-        elif len(split)==7 and probability >= int(split[++index].replace("%", "").replace("'", "").replace("[", "").replace("]", "").replace(" ", "")) and probability <= int(split[++5].replace("%", "").replace("'", "").replace("[", "").replace("]", "").replace(" ", "")):
+        elif len(split) == 5 and probability >= int(
+                split[index].replace("%", "").replace("'", "").replace(" ' ", "").replace("[", "").replace("]", "")):
             answer = split[2].replace("[", "").replace("]", "")
-        elif probability >= int(split[++index].replace("%", "").replace("'", "").replace("[", "").replace("]", "").replace(" ", "")):
+        # elif len(split) == 5 and probability >= (int(replacechar(split[index])) + int(replacechar(split[++index]))):
+        #     answer = split[2].replace("[", "").replace("]", "")
+        elif len(split) == 7 and probability <= int(
+                split[++index].replace("%","").replace ("'", "").replace("[", "").replace("]", "").replace(" ","")):
+            answer = split[1].replace("[", "").replace("]", "")
+        elif len(split) == 7 and int(
+                split[++4].replace("%", "").replace("'", "").replace("[", "").replace("]", "").replace(" ",
+                                                                                                       "")) <= probability <= (int(replacechar(split[++4])) + int(replacechar(split[++5]))):
             answer = split[2].replace("[", "").replace("]", "")
-        elif len(split) == 7:
+        elif len(split) == 7 and probability >= (int(replacechar(split[++4])) + int(replacechar(split[++5]))):
+                # >= int(split[+++5].replace("%", "").replace("'", "").replace("'", "").replace("[", "").replace("]","").replace(" ","")):
             answer = split[3].replace("[", "").replace("]", "")
+        else:
+            answer = 3.2
         player.payoff = answer
 
         return {
             "answer": player.payoff,
-            "question": player.session.answers[player.participant.selected_round].split(",")[0].replace("[","").replace("'","").replace( ";", ","),
+            "question": player.session.answers[player.participant.selected_round].split(",")[0].replace("[", "").replace("'", " ").replace( ";", ","),
             "info": player.session.answers[player.participant.selected_round],
-            "probability_number": probability
+            "probability_number": random_num_pay,
         }
 
 
@@ -224,4 +246,5 @@ class Results2(Page):
 
 
 
-page_sequence = [Introduction, Question, Question2, Question3, Results]
+
+page_sequence = [Introduction, Question,Question2, Question3, Results]
